@@ -1,3 +1,8 @@
+### Unreleased
+- Embedded: remove the ag provider and settings
+- Embedded: fix the rg provider and make it self-contained
+- Docs: update embedded providers and CLI example
+
 ### Version 4.19.1
 - Fixed slow update of statistics decorations (fixes #210) (#367) (thanks to @squidfunk and @marvinhagemeister)
 - Minor code style tweaks
