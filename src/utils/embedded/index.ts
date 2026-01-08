@@ -6,7 +6,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import Config from '../../config';
-import AG from './providers/ag';
 import JS from './providers/js';
 import RG from './providers/rg';
 
@@ -18,34 +17,22 @@ const Embedded = {
 
     if ( Embedded.provider ) return;
 
-    const {javascript, ag, rg} = Embedded.providers,
+    const {javascript, rg} = Embedded.providers,
           provider = Config.get ().embedded.provider,
-          // Provider = provider ? await Embedded.providers[provider]() || javascript () : await ag () || await rg () || javascript (); //FIXME: Trying to spawn "ag" or "rg" causes execa to never return, why is that?
-          Provider = javascript ();
+          providerFn = provider ? Embedded.providers[provider] : undefined,
+          Provider = providerFn ? await providerFn () || javascript () : await rg () || javascript ();
 
     Embedded.provider = new Provider ();
 
   },
 
-  provider: undefined as JS | AG | RG,
+  provider: undefined as JS | RG,
 
   providers: {
 
     javascript () {
 
       return JS;
-
-    },
-
-    async ag () {
-
-      try {
-
-        await execa ( 'ag', ['--version'] );
-
-        return AG;
-
-      } catch ( e ) {}
 
     },
 
@@ -73,6 +60,8 @@ const Embedded = {
       const name = /^win/.test ( process.platform ) ? 'rg.exe' : 'rg',
             basePath = path.dirname ( __dirname ),
             filePaths = [
+              path.join ( basePath, `node_modules.asar.unpacked/@vscode/ripgrep/bin/${name}` ),
+              path.join ( basePath, `node_modules/@vscode/ripgrep/bin/${name}` ),
               path.join ( basePath, `node_modules.asar.unpacked/vscode-ripgrep/bin/${name}` ),
               path.join ( basePath, `node_modules/vscode-ripgrep/bin/${name}` )
             ];
