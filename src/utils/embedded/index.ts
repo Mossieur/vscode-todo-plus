@@ -18,10 +18,9 @@ const Embedded = {
 
     if ( Embedded.provider ) return;
 
-    const {javascript, ag, rg} = Embedded.providers,
+    const {javascript, rg} = Embedded.providers,
           provider = Config.get ().embedded.provider,
-          // Provider = provider ? await Embedded.providers[provider]() || javascript () : await ag () || await rg () || javascript (); //FIXME: Trying to spawn "ag" or "rg" causes execa to never return, why is that?
-          Provider = javascript ();
+          Provider = provider ? await Embedded.providers[provider]() || javascript () : await rg () || javascript ();
 
     Embedded.provider = new Provider ();
 
@@ -73,6 +72,8 @@ const Embedded = {
       const name = /^win/.test ( process.platform ) ? 'rg.exe' : 'rg',
             basePath = path.dirname ( __dirname ),
             filePaths = [
+              path.join ( basePath, `node_modules.asar.unpacked/@vscode/ripgrep/bin/${name}` ),
+              path.join ( basePath, `node_modules/@vscode/ripgrep/bin/${name}` ),
               path.join ( basePath, `node_modules.asar.unpacked/vscode-ripgrep/bin/${name}` ),
               path.join ( basePath, `node_modules/vscode-ripgrep/bin/${name}` )
             ];

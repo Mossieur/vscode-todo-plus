@@ -154,11 +154,11 @@ Dates are formatted using [moment](https://momentjs.com/docs/#/displaying/format
 
 ## Embedded Todos Providers
 
-This extension supports various providers for searching for embedded todos, it'll use the one you set via the `todo.embedded.provider` setting or the first one available between:
+This extension supports various providers for searching for embedded todos, it'll use the one you set via the `todo.embedded.provider` setting (defaults to `javascript`):
 
 1. **[ag / The Silver Searcher](https://github.com/ggreer/the_silver_searcher)**: About 50x faster than the `javascript` provider, it'll use the regex defined under `todo.embedded.providers.ag.regex`. It must be installed in your system.
-2. **[rg / ripgrep](https://github.com/BurntSushi/ripgrep)**: About 50x faster than the `javascript` provider, it'll use the regex defined under `todo.embedded.providers.rg.regex`. It doesn't support lookaheads and lookbehinds. It must be installed in your system, or Visual Studio Code must include it.
-3. **javascript**: Works on every system, but it's quite slow. This is the fallback provider.
+2. **[rg / ripgrep](https://github.com/BurntSushi/ripgrep)**: About 50x faster than the `javascript` provider, it'll use the regex defined under `todo.embedded.providers.rg.regex`. It doesn't support lookaheads and lookbehinds. It is bundled with this extension, or it can be provided by the system.
+3. **javascript**: Works on every system, but it's quite slow. This is the default provider.
 
 `ag` and `rg` will use their specific regexes for finding the lines containing embedded todos, then those lines will be searched in using the regex defined under `todo.embedded.regex`.
 

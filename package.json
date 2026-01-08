@@ -547,7 +547,7 @@
             "rg"
           ],
           "description": "The provider to use when searching for embedded todos",
-          "default": ""
+          "default": "javascript"
         },
         "todo.embedded.providers.ag.regex": {
           "type": "string",
@@ -1055,7 +1055,8 @@
     "string-matches": "^1.1.3",
     "sugar-date": "^2.0.6",
     "to-time": "^1.0.2",
-    "vscode-beggar": "^1.0.0"
+    "vscode-beggar": "^1.0.0",
+    "@vscode/ripgrep": "^1.17.0"
   },
   "devDependencies": {
     "ts-loader": "^5.2.1",
