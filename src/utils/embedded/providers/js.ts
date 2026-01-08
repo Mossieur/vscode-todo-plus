@@ -72,13 +72,17 @@ class JS extends Abstract {
 
       }
 
-      matches.forEach ( match => {
+      matches.forEach(match => {
 
-        data.push ({
+        const rawType = match[1],
+          upperType = rawType ? rawType.toUpperCase() : '',
+          type = (upperType === '- [ ]' || upperType === '* [ ]' || upperType === '+ [ ]') ? 'MARKDOWN TASKS ✓' : upperType;
+
+        data.push({
           todo: match[0],
-          type: match[1].toUpperCase (),
+          type,
           message: match[2],
-          code: line.slice ( 0, line.indexOf ( match[0] ) ),
+          code: line.slice(0, line.indexOf(match[0])),
           rawLine,
           line,
           lineNr,

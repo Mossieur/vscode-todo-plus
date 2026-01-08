@@ -187,7 +187,11 @@ class Abstract {
         lines.push ( `\n${root}:` );
       }
 
-      const types = Object.keys ( todos[root] ).sort ();
+      const types = Object.keys ( todos[root] ).sort ( ( a, b ) => {
+        if ( a === 'MARKDOWN TASKS ✓' ) return -1;
+        if ( b === 'MARKDOWN TASKS ✓' ) return 1;
+        return a.localeCompare ( b );
+      } );
 
       types.forEach ( type => {
 

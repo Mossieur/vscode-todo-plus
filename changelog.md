@@ -1,7 +1,15 @@
 ### Unreleased
+
+#### AG/RG Providers
+
 - Embedded: remove the ag provider and settings
 - Embedded: fix the rg provider and make it self-contained
 - Docs: update embedded providers and CLI example
+
+#### Markdown-checkbox
+
+- Embedded: show markdown tasks first in the embedded view
+- Embedded: support markdown task list checkboxes in the embedded regex
 
 ### Version 4.19.1
 - Fixed slow update of statistics decorations (fixes #210) (#367) (thanks to @squidfunk and @marvinhagemeister)
