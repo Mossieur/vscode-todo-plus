@@ -543,23 +543,10 @@
           "type": "string",
           "enum": [
             "javascript",
-            "ag",
             "rg"
           ],
           "description": "The provider to use when searching for embedded todos",
           "default": "javascript"
-        },
-        "todo.embedded.providers.ag.regex": {
-          "type": "string",
-          "description": "Regex used by ag, requires double escaping",
-          "default": "(?:#|// @|//|/\\*+|<!--|--|\\* @|\\{!|\\{\\{!--|\\{\\{!) *(TODO|FIXME|FIX|BUG|UGLY|HACK|NOTE|IDEA|REVIEW|DEBUG|OPTIMIZE)"
-        },
-        "todo.embedded.providers.ag.args": {
-          "type": "string",
-          "description": "Extra arguments to pass to ag",
-          "default": [
-            "--ignore-case"
-          ]
         },
         "todo.embedded.providers.rg.regex": {
           "type": "string",

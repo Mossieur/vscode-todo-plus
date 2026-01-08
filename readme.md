@@ -127,9 +127,7 @@ It adds 6 shortcuts when editing a `Todo` file:
   "todo.embedded.regexFlags": "gi", // Regex flags to use
   "todo.embedded.include": ["**/*"], // Globs to use for including files
   "todo.embedded.exclude": ["**/.*", "**/.*/**", ...], // Globs to use for excluding files
-  "todo.embedded.provider": "", // The provider to use when searching for embedded todos
-  "todo.embedded.providers.ag.regex": "(?:#|// @|//|/\\*+|<!--|--|\\* @|\\{!|\\{\\{!--|\\{\\{!) *(TODO|FIXME|FIX|BUG|UGLY|HACK|NOTE|IDEA|REVIEW|DEBUG|OPTIMIZE)", // Regex used by ag, requires double escaping
-  "todo.embedded.providers.ag.args": ['--ignore-case'], // Extra arguments to pass to ag
+  "todo.embedded.provider": "", // The provider to use when searching for embedded todos (javascript or rg)
   "todo.embedded.providers.rg.regex": "(?:#|// @|//|/\\*+|<!--|--|\\* @|\\{!|\\{\\{!--|\\{\\{!) *(TODO|FIXME|FIX|BUG|UGLY|HACK|NOTE|IDEA|REVIEW|DEBUG|OPTIMIZE)", // Regex used by rg, requires double escaping
   "todo.embedded.providers.rg.args": ['--ignore-case'], // Extra arguments to pass to rg
   "todo.embedded.file.wholeLine": true, // Show the whole line
@@ -156,11 +154,10 @@ Dates are formatted using [moment](https://momentjs.com/docs/#/displaying/format
 
 This extension supports various providers for searching for embedded todos, it'll use the one you set via the `todo.embedded.provider` setting (defaults to `javascript`):
 
-1. **[ag / The Silver Searcher](https://github.com/ggreer/the_silver_searcher)**: About 50x faster than the `javascript` provider, it'll use the regex defined under `todo.embedded.providers.ag.regex`. It must be installed in your system.
-2. **[rg / ripgrep](https://github.com/BurntSushi/ripgrep)**: About 50x faster than the `javascript` provider, it'll use the regex defined under `todo.embedded.providers.rg.regex`. It doesn't support lookaheads and lookbehinds. It is bundled with this extension, or it can be provided by the system.
-3. **javascript**: Works on every system, but it's quite slow. This is the default provider.
+1. **[rg / ripgrep](https://github.com/BurntSushi/ripgrep)**: About 50x faster than the `javascript` provider, it'll use the regex defined under `todo.embedded.providers.rg.regex`. It doesn't support lookaheads and lookbehinds. It is bundled with this extension, or it can be provided by the system.
+2. **javascript**: Works on every system, but it's quite slow. This is the default provider.
 
-`ag` and `rg` will use their specific regexes for finding the lines containing embedded todos, then those lines will be searched in using the regex defined under `todo.embedded.regex`.
+`rg` will use its specific regex for finding the lines containing embedded todos, then those lines will be searched in using the regex defined under `todo.embedded.regex`.
 
 ## Statistics Tokens
 
@@ -219,10 +216,10 @@ The following tokens can be used in `todo.statistics.project.text`, `todo.statis
 
 - **Icons**: icons can be used in `todo.statistics.statusbar.text`. [Here](https://octicons.github.com/) you can browse a list of supported icons. If for instance you click the first icon, you'll get a page with `.octicon-alert` written in it, to get the string to use simply remove the `.octicon-` part, so in this case the icon name would be `alert`.
 
-- **CLI**: you can view your embedded todos from the command line with the `todo` command if you install [ag](https://github.com/ggreer/the_silver_searcher) and add the following to your shell configuration file:
+- **CLI**: you can view your embedded todos from the command line with the `todo` command if you install [rg](https://github.com/BurntSushi/ripgrep) and add the following to your shell configuration file:
 
 ```bash
-alias todo="ag --color-line-number '1;36' --color-path '1;36' --ignore-case --print-long-lines --silent '(?:<!-- *)?(?:#|//|/\*+|<!--|--) *(TODO|FIXME|FIX|BUG|UGLY|HACK|NOTE|IDEA|REVIEW|DEBUG|OPTIMIZE)(?:\([^(]+\))?:?(?!\w)(?: *-->| *\*/|(?= *(?:[^:]//|/\*+|<!--|@|--))|((?: +[^\n@]*?)(?= *(?:[^:]//|/\*+|<!--|@|--))|(?: +[^@\n]+)?))'"
+alias todo="rg --pcre2 --color=always --line-number --no-heading --ignore-case '(?:<!-- *)?(?:#|// @|//|/\*+|<!--|--) *(TODO|FIXME|FIX|BUG|UGLY|HACK|NOTE|IDEA|REVIEW|DEBUG|OPTIMIZE)(?:\s*\([^)]+\))?:?(?!\w)(?: *-->| *\*/|(?= *(?:[^:]//|/\*+|<!--|@|--))|((?: +[^\n@]*?)(?= *(?:[^:]//|/\*+|<!--|@|--))|(?: +[^@\n]+)?))'"
 ```
 
 ## Related

@@ -6,7 +6,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import Config from '../../config';
-import AG from './providers/ag';
 import JS from './providers/js';
 import RG from './providers/rg';
 
@@ -20,31 +19,20 @@ const Embedded = {
 
     const {javascript, rg} = Embedded.providers,
           provider = Config.get ().embedded.provider,
-          Provider = provider ? await Embedded.providers[provider]() || javascript () : await rg () || javascript ();
+          providerFn = provider ? Embedded.providers[provider] : undefined,
+          Provider = providerFn ? await providerFn () || javascript () : await rg () || javascript ();
 
     Embedded.provider = new Provider ();
 
   },
 
-  provider: undefined as JS | AG | RG,
+  provider: undefined as JS | RG,
 
   providers: {
 
     javascript () {
 
       return JS;
-
-    },
-
-    async ag () {
-
-      try {
-
-        await execa ( 'ag', ['--version'] );
-
-        return AG;
-
-      } catch ( e ) {}
 
     },
 
