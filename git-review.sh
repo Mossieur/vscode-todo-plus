@@ -57,6 +57,9 @@ if parent_line is None or parent_line != expected_parent_line:
 
 out = []
 for line in lines:
+    if line.startswith("# [DRAFT] 📄 Pre-Commit Git Review —"):
+        out.append(line.replace("DRAFT", "FINALIZED"))
+        continue
     if line.startswith(final_prefix):
         continue
     out.append(line)
@@ -134,7 +137,7 @@ NONE_TEXT="_No files_"
 [ -z "$RENAMED" ] && RENAMED="$NONE_TEXT"
 
 {
-  echo "# 📄 Pre-Commit Git Review — $HUMAN_DATE"
+  echo "# [DRAFT] 📄 Pre-Commit Git Review — $HUMAN_DATE"
   echo ""
   echo "## 🔖 Context"
   echo ""
