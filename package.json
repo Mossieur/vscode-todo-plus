@@ -991,6 +991,7 @@
   "scripts": {
     "vscode:prepublish": "rm -rf out && webpack --mode production",
     "package:vsix": "npm install && npm run vscode:prepublish && npx @vscode/vsce package",
+    "vsix:install": "npm run package:vsix && code --install-extension *.vsix --force && rm -f *.vsix",
     "compile": "webpack --mode development",
     "compile:watch": "webpack --mode development --watch",
     "postinstall": "node ./node_modules/vscode/bin/install",
