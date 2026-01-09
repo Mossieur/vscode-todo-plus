@@ -1,16 +1,27 @@
+# OS/editor
 *~
-*.err
-*.log
 ._*
-.cache
-.fseventsd
-.DocumentRevisions*
 .DS_Store
+.DocumentRevisions*
 .TemporaryItems
 .Trashes
+.fseventsd
 Thumbs.db
 
-dist
-node_modules
+# Logs
+*.err
+*.log
+
+# Tooling caches
+.cache
+.vscode-test/
+.vscode/
+
+# Build artifacts
+dist/
+out/
+*.vsix
+
+# Dependencies
+node_modules/
 package-lock.json
-out
