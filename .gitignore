@@ -25,3 +25,6 @@ out/
 # Dependencies
 node_modules/
 package-lock.json
+
+# Local review artifacts
+reviews/
