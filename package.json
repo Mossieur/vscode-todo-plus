@@ -990,7 +990,7 @@
   },
   "scripts": {
     "vscode:prepublish": "rm -rf out && webpack --mode production",
-    "package:vsix": "npm install && npm run vscode:prepublish && npx @vscode/vsce package",
+    "package:vsix": "npm install && npm run vscode:prepublish && npx @vscode/vsce package && rm -rf out",
     "vsix:install": "npm run package:vsix && code --install-extension *.vsix --force && rm -f *.vsix",
     "git:review": "git diff --cached --quiet && echo \"No staged changes.\" || ./git-review.sh",
     "git:review:update": "./git-review.sh update HEAD",
