@@ -3,9 +3,9 @@
 
 import * as _ from 'lodash';
 import * as path from 'path';
-import * as vscode from 'vscode';
 import Config from '../config';
 import File from './file';
+import Utils from './index';
 
 /* TODO */
 
@@ -14,7 +14,11 @@ const Todo = {
   getFiles ( folderPath ) {
 
     const config = Config.get (),
-          {extensions} = vscode.extensions.getExtension ( 'fabiospampinato.vscode-todo-plus' ).packageJSON.contributes.languages[0],
+          extension = Utils.extension,
+          packageJSON = extension && extension.packageJSON,
+          contributes = packageJSON && packageJSON.contributes,
+          languages = contributes && contributes.languages,
+          extensions = ( languages && languages[0] && languages[0].extensions ) || [],
           files = _.uniq ([ config.file.name, ...extensions ]);
 
     return files.map ( file => path.join ( folderPath, file ) );
