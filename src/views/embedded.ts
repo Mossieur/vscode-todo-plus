@@ -91,7 +91,16 @@ class Embedded extends View {
 
     } else if ( _.isObject ( obj ) ) {
 
-      const keys = Object.keys ( obj ).sort ();
+      const keys = Object.keys ( obj ).sort ( ( a, b ) => {
+        const isFileA = this.filePathRe.test ( a ),
+              isFileB = this.filePathRe.test ( b );
+
+        if ( isFileA || isFileB ) return a.localeCompare ( b );
+        if ( a === 'MARKDOWN TASKS ✓' ) return -1;
+        if ( b === 'MARKDOWN TASKS ✓' ) return 1;
+
+        return a.localeCompare ( b );
+      } );
 
       return keys.map ( key => {
 

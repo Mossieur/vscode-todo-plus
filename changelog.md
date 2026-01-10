@@ -1,3 +1,7 @@
+### Unreleased
+- Embedded: support markdown task list checkboxes in the embedded regex
+- Embedded: show markdown tasks first in the embedded view
+
 ### Version 4.19.1
 - Fixed slow update of statistics decorations (fixes #210) (#367) (thanks to @squidfunk and @marvinhagemeister)
 - Minor code style tweaks
