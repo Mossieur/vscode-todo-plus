@@ -1,11 +1,26 @@
+# Build artifacts and maps
 **/*.map
+
+# VCS and metadata
 .gitignore
+.github/**
+.vscodeignore
+
+# Local tooling and test harness
 .vscode-test/**
 .vscode/**
 out/test/**
-resources/*.gif
-resources/*.psd
-src/**
 test/**
+
+# Source (bundled output only)
+src/**
 tsconfig.json
 webpack.config.js
+
+# Large assets and local helpers
+resources/*.gif
+resources/*.psd
+resources/demo/**
+reviews/**
+git-review.sh
+*.vsix

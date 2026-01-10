@@ -6,14 +6,19 @@ import * as vscode from 'vscode';
 import Consts from '../consts';
 import * as Commands from '../commands';
 import Views from '../views';
+import Utils from './index';
 
 /* INIT */
 
 const Init = {
 
   commands ( context: vscode.ExtensionContext ) {
+    
+    const extension = Utils.extension,
+          packageJSON = extension && extension.packageJSON,
+          contributes = ( packageJSON && packageJSON.contributes ) || {},
+          commands = contributes.commands || [];
 
-    const {commands} = vscode.extensions.getExtension ( 'fabiospampinato.vscode-todo-plus' ).packageJSON.contributes;
 
     commands.forEach ( ({ command, title }) => {
 
