@@ -1,6 +1,7 @@
 
 /* IMPORT */
 
+import Utils from '../../utils';
 import Item from './item';
 
 /* TODO */
@@ -22,7 +23,11 @@ class Todo extends Item {
     };
 
     if ( icon ) {
-      this.setTypeIcon ( obj.type );
+      if ( obj.type === 'MARKDOWN TASKS ✓' ) {
+        this.iconPath = Utils.view.getMarkdownIcon ( 'checkbox' );
+      } else {
+        this.setTypeIcon ( obj.type );
+      }
     }
 
   }
