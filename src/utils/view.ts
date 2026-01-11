@@ -30,6 +30,28 @@ const View = {
   },
 
   icons: {},
+  markdownIcons: {},
+
+  getMarkdownIcon ( kind ) {
+
+    if ( View.markdownIcons[kind] ) return View.markdownIcons[kind];
+
+    const {context} = require ( '.' ).default, // Avoiding a cyclic dependency
+          iconPath = kind === 'checkbox'
+            ? {
+                light: context.asAbsolutePath ( 'resources/icons/markdown_checkbox_light.svg' ),
+                dark: context.asAbsolutePath ( 'resources/icons/markdown_checkbox_dark.svg' )
+              }
+            : {
+                light: context.asAbsolutePath ( 'resources/icons/markdown-logo_light.svg' ),
+                dark: context.asAbsolutePath ( 'resources/icons/markdown-logo_dark.svg' )
+              };
+
+    View.markdownIcons[kind] = iconPath;
+
+    return iconPath;
+
+  },
 
   getTypeIcon ( type ) { //TODO: Add support for light/dark colors
 

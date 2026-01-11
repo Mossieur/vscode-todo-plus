@@ -2,6 +2,7 @@
 /* IMPORT */
 
 import * as vscode from 'vscode';
+import Utils from '../../utils';
 import Item from './item';
 
 /* GROUP */
@@ -18,7 +19,11 @@ class Group extends Item {
 
       const type = label.toUpperCase ();
 
-      this.setTypeIcon ( type );
+      if ( type === 'MARKDOWN TASKS ✓' ) {
+        this.iconPath = Utils.view.getMarkdownIcon ( 'logo' );
+      } else {
+        this.setTypeIcon ( type );
+      }
 
       if ( this.iconPath ) {
 
