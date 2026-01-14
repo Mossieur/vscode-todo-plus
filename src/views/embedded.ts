@@ -3,6 +3,7 @@
 
 import * as _ from 'lodash';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import Utils from '../utils';
 import File from './items/file';
 import Item from './items/item';
@@ -65,29 +66,18 @@ class Embedded extends View {
 
     let obj = item ? item.obj : await this.getEmbedded ();
 
+    if ( item && _.isArray ( item.obj.children ) ) {
+      obj = item.obj.children;
+      obj.fromNested = true;
+    }
+
     while ( obj && '' in obj ) obj = obj['']; // Collapsing unnecessary groups
 
     if ( _.isEmpty ( obj ) ) return [new Placeholder ( 'No embedded todos found' )];
 
     if ( _.isArray ( obj ) ) {
 
-      const todos = obj.map ( obj => {
-
-        return new Todo ( obj, this.config.embedded.view.wholeLine ? obj.line : obj.message || obj.todo, this.config.embedded.view.icons );
-
-      });
-
-      if ( this.config.embedded.view.sortBy === 'label' ) {
-
-        todos.sort ( ( a, b ) => {
-
-          return a.label.toString ().localeCompare ( b.label.toString () );
-
-        });
-
-      }
-
-      return todos;
+      return this.getTodoItems ( obj );
 
     } else if ( _.isObject ( obj ) ) {
 
@@ -129,6 +119,132 @@ class Embedded extends View {
     this.clear = !!clear;
 
     super.refresh ();
+
+  }
+
+  getTodoItems ( data ) {
+
+    const sectionGroups = this.getMarkdownSectionGroups ( data );
+
+    if ( sectionGroups ) return sectionGroups;
+
+    const hasNestedChildren = data.some ( todo => _.isArray ( todo.children ) ),
+          addSectionSuffix = !( data as any ).sectionGrouped,
+          shouldNestMarkdown = !hasNestedChildren && this.shouldNestMarkdownTodos ( data ),
+          todoData = shouldNestMarkdown ? this.buildMarkdownTodoTree ( data ) : data,
+          todos = todoData.map ( obj => {
+
+            const label = this.config.embedded.view.wholeLine ? obj.line : obj.message || obj.todo,
+                  sectionSuffix = ( addSectionSuffix && obj.sectionTitle && !obj.isNested ) ? ` (${obj.sectionTitle})` : '',
+                  labelWithSection = `${label}${sectionSuffix}`,
+                  item = new Todo ( obj, labelWithSection, this.config.embedded.view.icons );
+
+            if ( _.isArray ( obj.children ) && obj.children.length ) {
+              item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+            }
+
+            return item;
+
+          } );
+
+    if ( this.config.embedded.view.sortBy === 'label' ) {
+
+      todos.sort ( ( a, b ) => {
+
+        return a.label.toString ().localeCompare ( b.label.toString () );
+
+      });
+
+    }
+
+    return todos;
+
+  }
+
+  getMarkdownSectionGroups ( data ) {
+
+    if ( ( data as any ).sectionGrouped || ( data as any ).fromNested ) return;
+    if ( !data.length ) return;
+    if ( !data.every ( todo => todo && todo.type === 'MARKDOWN TASKS ✓' ) ) return;
+    if ( !data.every ( todo => todo.sectionTitle ) ) return;
+
+    const sections = [],
+          sectionMap = new Map<string, any[]> ();
+
+    data.forEach ( todo => {
+      const title = todo.sectionTitle;
+      if ( !title ) return;
+      if ( !sectionMap.has ( title ) ) {
+        sectionMap.set ( title, [] );
+        sections.push ( title );
+      }
+      sectionMap.get ( title ).push ( todo );
+    } );
+
+    if ( !sections.length ) return;
+
+    return sections.map ( title => {
+      const sectionTodos = sectionMap.get ( title );
+      ( sectionTodos as any ).sectionGrouped = true;
+      const displayTitle = title.replace ( /^\s*#{1,6}\s+/, '' ).trim ();
+      return new Group ( sectionTodos, displayTitle, false );
+    } );
+
+  }
+
+  shouldNestMarkdownTodos ( data ) {
+
+    if ( !data.length ) return false;
+
+    if ( !data.every ( todo => todo && todo.type === 'MARKDOWN TASKS ✓' ) ) return false;
+
+    const filePath = data[0].filePath;
+
+    if ( !filePath || !data.every ( todo => todo.filePath === filePath ) ) return false;
+
+    return path.extname ( filePath ).toLowerCase () === '.md';
+
+  }
+
+  buildMarkdownTodoTree ( data ) {
+
+    const indentUnit = this.getIndentUnit (),
+          indentUnitLength = indentUnit.length,
+          levels = data.map ( todo => {
+            const rawLine = todo.rawLine || '',
+                  leading = rawLine.match ( /^\s*/ )[0],
+                  expanded = leading.replace ( /\t/g, indentUnit );
+            return Math.floor ( expanded.length / indentUnitLength );
+          } ),
+          minLevel = Math.min ( ...levels ),
+          roots = [],
+          stack = [{ level: -1, children: roots }];
+
+    data.forEach ( ( todo, index ) => {
+
+      const level = Math.max ( 0, levels[index] - minLevel ),
+            node = Object.assign ( {}, todo, { children: [] } );
+
+      while ( stack.length > 1 && level <= stack[stack.length - 1].level ) {
+        stack.pop ();
+      }
+
+      stack[stack.length - 1].children.push ( node );
+      stack.push ({ level, children: node.children });
+
+    });
+
+    return roots;
+
+  }
+
+  getIndentUnit () {
+
+    const indentation = this.config.indentation;
+
+    if ( typeof indentation !== 'string' || !indentation.length ) return '  ';
+
+    return indentation;
 
   }
 

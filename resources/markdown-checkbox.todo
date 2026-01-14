@@ -1,0 +1,19 @@
+
+MARKDOWN TASKS ✓:
+  @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md
+    ☐ - [ ] task one @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#7
+    ☐ - [ ] task two with text @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#8
+    ☐ - [ ] task with @tag and TODO keyword @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#9
+    ☐ - [ ] TODO: task with colon @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#10
+    ☐ - [ ] FIXME task inline @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#11
+    ☐ - [ ] indented task @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#15
+    ☐ - [ ] nested task @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#16
+    ☐ - [ ] tab-indented task @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#17
+    ☐ - [ ] Test @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#18
+    ☐ - [ ] eteegergrege @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#19
+    ☐ - [ ] task followed by TODO: and text @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#23
+    ☐ - [ ] task then @started(2026-01-01) @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#24
+    ☐ - [ ] 123 @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#30
+    ☐ - [ ] task with brackets [] @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#31
+    ☐ - [ ] task with markdown **bold** and _italic_ @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#32
+    ☐ - [ ] (no text) @file:///Users/benjamin/wks-fr.mossieur/vscode-extenstions/vscode-todo-plus/resources/markdown-checkbox.test.md#40

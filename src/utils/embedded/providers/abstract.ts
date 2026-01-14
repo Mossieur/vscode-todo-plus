@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import Config from '../../../config';
 import EmbeddedView from '../../../views/embedded';
 import Folder from '../../folder';
+import File from '../../file';
 
 /* ABSTRACT */
 
@@ -127,6 +128,8 @@ class Abstract {
 
     if ( _.isEmpty ( this.filesData ) ) return;
 
+    this.addMarkdownSectionTitles ( this.filesData );
+
     const todos = {}, // { [ROOT] { [TYPE] => { [FILEPATH] => [DATA] } } }
           filterRe = filter ? new RegExp ( _.escapeRegExp ( filter ), 'i' ) : false,
           filePaths = Object.keys ( this.filesData ),
@@ -217,9 +220,11 @@ class Abstract {
           data.forEach ( datum => {
 
             const normalizedFilePath = `/${_.trimStart ( datum.filePath, '/' )}`,
-                  encodedFilePath = querystring.escape ( normalizedFilePath ).replace ( sepRe, '/' );
+                  encodedFilePath = querystring.escape ( normalizedFilePath ).replace ( sepRe, '/' ),
+                  label = _.trimStart ( wholeLine ? datum.line : datum.message ),
+                  sectionSuffix = ( datum.sectionTitle && !datum.isNested ) ? ` (${datum.sectionTitle})` : '';
 
-            lines.push ( `${root ? indentation : ''}${type ? indentation : ''}${filePath ? indentation : ''}${box} ${_.trimStart ( wholeLine ? datum.line : datum.message )} @file://${encodedFilePath}#${datum.lineNr + 1}` );
+            lines.push ( `${root ? indentation : ''}${type ? indentation : ''}${filePath ? indentation : ''}${box} ${label}${sectionSuffix} @file://${encodedFilePath}#${datum.lineNr + 1}` );
 
           });
 
@@ -230,6 +235,95 @@ class Abstract {
     });
 
     return lines.length ? `${lines.join ( '\n' )}\n` : '';
+
+  }
+
+  addMarkdownSectionTitles ( filesData ) {
+
+    const filePaths = Object.keys ( filesData );
+
+    filePaths.forEach ( filePath => {
+
+      const data = filesData[filePath];
+
+      if ( !data || !data.length ) return;
+      if ( path.extname ( filePath ).toLowerCase () !== '.md' ) return;
+
+      const todosToUpdate = data.filter ( datum => datum.type === 'MARKDOWN TASKS ✓' );
+
+      if ( !todosToUpdate.length ) return;
+
+      const content = File.readSync ( filePath );
+
+      if ( !content ) return;
+
+      const lines = content.split ( /\r?\n/ ),
+            lineToTodos = new Map<number, any[]> ();
+
+      todosToUpdate.forEach ( datum => {
+        datum.sectionTitle = undefined;
+        datum.isNested = false;
+        if ( !lineToTodos.has ( datum.lineNr ) ) lineToTodos.set ( datum.lineNr, [] );
+        lineToTodos.get ( datum.lineNr ).push ( datum );
+      } );
+
+      let currentSection = '',
+          inCodeFence = false;
+
+      const baseIndentBySection = new Map<string, number> (),
+            indentUnit = this.getIndentUnit ( Config.get ().indentation );
+
+      lines.forEach ( ( line, lineNr ) => {
+
+        if ( /^\s*(```|~~~)/.test ( line ) ) {
+          inCodeFence = !inCodeFence;
+        }
+
+        if ( !inCodeFence ) {
+          const headingMatch = line.match ( /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/ );
+          if ( headingMatch ) currentSection = `${headingMatch[1]} ${headingMatch[2].trim ()}`;
+        }
+
+        const todosAtLine = lineToTodos.get ( lineNr );
+        if ( !todosAtLine ) return;
+
+        if ( !currentSection ) {
+          todosAtLine.forEach ( datum => {
+            datum.sectionTitle = undefined;
+            datum.isNested = false;
+          } );
+          return;
+        }
+
+        const leading = line.match ( /^\s*/ )[0],
+              expanded = leading.replace ( /\t/g, indentUnit ),
+              indentWidth = expanded.length,
+              baseIndent = baseIndentBySection.get ( currentSection );
+
+        if ( _.isUndefined ( baseIndent ) || indentWidth <= baseIndent ) {
+          baseIndentBySection.set ( currentSection, indentWidth );
+          todosAtLine.forEach ( datum => {
+            datum.sectionTitle = currentSection;
+            datum.isNested = false;
+          } );
+        } else {
+          todosAtLine.forEach ( datum => {
+            datum.sectionTitle = currentSection;
+            datum.isNested = true;
+          } );
+        }
+
+      } );
+
+    } );
+
+  }
+
+  getIndentUnit ( indentation ) {
+
+    if ( typeof indentation !== 'string' || !indentation.length ) return '  ';
+
+    return indentation;
 
   }
 

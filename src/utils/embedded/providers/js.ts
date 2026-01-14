@@ -2,6 +2,7 @@
 /* IMPORT */
 
 import * as _ from 'lodash';
+import * as path from 'path';
 import stringMatches from 'string-matches';
 import Consts from '../../../consts';
 import File from '../../file';
@@ -55,14 +56,32 @@ class JS extends Abstract {
 
     if ( !content ) return data;
 
-    const lines = content.split ( /\r?\n/ );
+    const lines = content.split ( /\r?\n/ ),
+          isMarkdown = path.extname ( filePath ).toLowerCase () === '.md';
 
-    let parsedPath;
+    let parsedPath,
+        currentSection = '',
+        inCodeFence = false;
 
     lines.forEach ( ( rawLine, lineNr ) => {
 
       const line = _.trimStart ( rawLine ),
             matches = stringMatches ( line, Consts.regexes.todoEmbedded );
+
+      if ( isMarkdown ) {
+
+        if ( /^\s*(```|~~~)/.test ( rawLine ) ) {
+          inCodeFence = !inCodeFence;
+        }
+
+        if ( !inCodeFence ) {
+          const headingMatch = rawLine.match ( /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/ );
+          if ( headingMatch ) {
+            currentSection = `${headingMatch[1]} ${headingMatch[2].trim ()}`;
+          }
+        }
+
+      }
 
       if ( !matches.length ) return;
 
@@ -87,6 +106,7 @@ class JS extends Abstract {
           line,
           lineNr,
           filePath,
+          sectionTitle: ( isMarkdown && type === 'MARKDOWN TASKS ✓' && currentSection ) ? currentSection : undefined,
           root: parsedPath.root,
           rootPath: parsedPath.rootPath,
           relativePath: parsedPath.relativePath
