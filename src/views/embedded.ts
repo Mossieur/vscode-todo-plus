@@ -39,6 +39,11 @@ class Embedded extends View {
 
   getTreeItem ( item: Item ): vscode.TreeItem {
 
+    if ( item.contextValue === 'sectionGroup' ) {
+      item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      return item;
+    }
+
     if ( item.collapsibleState !== vscode.TreeItemCollapsibleState.None ) {
       item.collapsibleState = this.expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed;
     }
@@ -178,8 +183,11 @@ class Embedded extends View {
     return sections.map ( title => {
       const sectionTodos = sectionMap.get ( title );
       sectionTodos.sectionGrouped = true;
-      const displayTitle = Markdown.getDisplayHeadingTitle ( title );
-      return new Group ( sectionTodos, displayTitle, false );
+      const displayTitle = Markdown.getDisplayHeadingTitle ( title ),
+            group = new Group ( sectionTodos, displayTitle, false );
+      group.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      group.contextValue = 'sectionGroup';
+      return group;
     } );
 
   }

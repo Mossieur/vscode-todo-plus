@@ -4,6 +4,7 @@
 import * as _ from 'lodash';
 import * as querystring from 'querystring';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import Config from '../../../config';
 import EmbeddedView from '../../../views/embedded';
@@ -20,6 +21,7 @@ class Abstract {
   rootPaths = undefined;
   filesData = undefined; // { [filePath]: todo[] | undefined }
   watcher: vscode.FileSystemWatcher = undefined;
+  markdownSectionCache = new Map<string, { mtimeMs: number; lineMeta: Map<number, MarkdownLineMeta> }>();
 
   async get ( rootPaths = Folder.getAllRootPaths (), groupByRoot = true, groupByType = true, groupByFile = true, filter: string | false = false, onlyActiveFile: boolean = false ) {
 
@@ -249,85 +251,114 @@ class Abstract {
       const data = filesData[filePath] as TodoDataArray;
 
       if ( !data || !data.length ) return;
-      if ( data.sectionMetaComputed ) return;
       if ( path.extname ( filePath ).toLowerCase () !== '.md' ) return;
 
       const todosToUpdate = data.filter ( datum => datum.type === 'MARKDOWN TASKS ✓' );
 
-      if ( !todosToUpdate.length ) {
-        data.sectionMetaComputed = true;
-        return;
-      }
+      if ( !todosToUpdate.length ) return;
 
-      const content = File.readSync ( filePath );
-
-      if ( !content ) return;
-
-      const lines = content.split ( /\r?\n/ ),
-            lineToTodos = new Map<number, any[]> ();
+      const lineToTodos = new Map<number, any[]> ();
 
       todosToUpdate.forEach ( datum => {
-        datum.sectionTitle = undefined;
-        datum.isNested = false;
         if ( !lineToTodos.has ( datum.lineNr ) ) lineToTodos.set ( datum.lineNr, [] );
         lineToTodos.get ( datum.lineNr ).push ( datum );
       } );
 
-      let currentSection = '',
-          inCodeFence = false;
+      const fileMeta = this.getMarkdownLineMeta ( filePath, lineToTodos, indentUnit );
 
-      const baseIndentBySection = new Map<string, number> ();
+      if ( !fileMeta ) return;
 
-      lines.forEach ( ( line, lineNr ) => {
-
-        if ( Markdown.isCodeFence ( line ) ) {
-          inCodeFence = !inCodeFence;
-        }
-
-        if ( !inCodeFence ) {
-          const headingTitle = Markdown.getHeadingTitle ( line );
-          if ( headingTitle ) currentSection = headingTitle;
-        }
-
-        const todosAtLine = lineToTodos.get ( lineNr );
-        if ( !todosAtLine ) return;
-
-        if ( !currentSection ) {
-          todosAtLine.forEach ( datum => {
-            datum.sectionTitle = undefined;
-            datum.isNested = false;
-          } );
-          return;
-        }
-
-        const indentWidth = Markdown.getIndentWidth ( line, indentUnit ),
-              baseIndent = baseIndentBySection.get ( currentSection );
-
-        if ( _.isUndefined ( baseIndent ) || indentWidth <= baseIndent ) {
-          baseIndentBySection.set ( currentSection, indentWidth );
-          todosAtLine.forEach ( datum => {
-            datum.sectionTitle = currentSection;
-            datum.isNested = false;
-          } );
-        } else {
-          todosAtLine.forEach ( datum => {
-            datum.sectionTitle = currentSection;
-            datum.isNested = true;
-          } );
-        }
-
-      } );
-
-      data.sectionMetaComputed = true;
+      this.applyMarkdownLineMeta ( todosToUpdate, fileMeta );
 
     } );
 
   }
 
+  getMarkdownLineMeta ( filePath, lineToTodos, indentUnit ) {
+
+    const stat = this.getFileStat ( filePath );
+
+    if ( !stat ) return;
+
+    const cached = this.markdownSectionCache.get ( filePath );
+
+    if ( cached && cached.mtimeMs === stat.mtimeMs ) return cached.lineMeta;
+
+    const content = File.readSync ( filePath );
+
+    if ( !content ) return;
+
+    const lines = content.split ( /\r?\n/ ),
+          lineMeta = new Map<number, MarkdownLineMeta> ();
+
+    let currentSection = '',
+        inCodeFence = false;
+
+    const baseIndentBySection = new Map<string, number> ();
+
+    lines.forEach ( ( line, lineNr ) => {
+
+      if ( Markdown.isCodeFence ( line ) ) {
+        inCodeFence = !inCodeFence;
+      }
+
+      if ( !inCodeFence ) {
+        const headingTitle = Markdown.getHeadingTitle ( line );
+        if ( headingTitle ) currentSection = headingTitle;
+      }
+
+      if ( !lineToTodos.has ( lineNr ) ) return;
+
+      if ( !currentSection ) {
+        lineMeta.set ( lineNr, { sectionTitle: undefined, isNested: false } );
+        return;
+      }
+
+      const indentWidth = Markdown.getIndentWidth ( line, indentUnit ),
+            baseIndent = baseIndentBySection.get ( currentSection );
+
+      if ( _.isUndefined ( baseIndent ) || indentWidth <= baseIndent ) {
+        baseIndentBySection.set ( currentSection, indentWidth );
+        lineMeta.set ( lineNr, { sectionTitle: currentSection, isNested: false } );
+      } else {
+        lineMeta.set ( lineNr, { sectionTitle: currentSection, isNested: true } );
+      }
+
+    } );
+
+    this.markdownSectionCache.set ( filePath, { mtimeMs: stat.mtimeMs, lineMeta } );
+
+    return lineMeta;
+
+  }
+
+  applyMarkdownLineMeta ( todos, lineMeta ) {
+
+    todos.forEach ( datum => {
+      const meta = lineMeta.get ( datum.lineNr );
+      datum.sectionTitle = meta ? meta.sectionTitle : undefined;
+      datum.isNested = meta ? meta.isNested : false;
+    } );
+
+  }
+
+  getFileStat ( filePath ) {
+
+    try {
+      return fs.statSync ( filePath );
+    } catch ( e ) {
+      return;
+    }
+
+  }
+
 }
 
-type TodoDataArray = Array<any> & {
-  sectionMetaComputed?: boolean;
+type TodoDataArray = Array<any>;
+
+type MarkdownLineMeta = {
+  sectionTitle?: string;
+  isNested: boolean;
 };
 
 /* EXPORT */
