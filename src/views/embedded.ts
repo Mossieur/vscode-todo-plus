@@ -5,6 +5,7 @@ import * as _ from 'lodash';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import Utils from '../utils';
+import Markdown from '../utils/embedded/markdown';
 import File from './items/file';
 import Item from './items/item';
 import Group from './items/group';
@@ -67,8 +68,9 @@ class Embedded extends View {
     let obj = item ? item.obj : await this.getEmbedded ();
 
     if ( item && _.isArray ( item.obj.children ) ) {
-      obj = item.obj.children;
-      obj.fromNested = true;
+      const childTodos = this.asTodoDataArray ( item.obj.children );
+      childTodos.fromNested = true;
+      obj = childTodos;
     }
 
     while ( obj && '' in obj ) obj = obj['']; // Collapsing unnecessary groups
@@ -77,7 +79,7 @@ class Embedded extends View {
 
     if ( _.isArray ( obj ) ) {
 
-      return this.getTodoItems ( obj );
+      return this.getTodoItems ( this.asTodoDataArray ( obj ) );
 
     } else if ( _.isObject ( obj ) ) {
 
@@ -122,22 +124,20 @@ class Embedded extends View {
 
   }
 
-  getTodoItems ( data ) {
+  getTodoItems ( data: TodoDataArray ) {
 
     const sectionGroups = this.getMarkdownSectionGroups ( data );
 
     if ( sectionGroups ) return sectionGroups;
 
     const hasNestedChildren = data.some ( todo => _.isArray ( todo.children ) ),
-          addSectionSuffix = !( data as any ).sectionGrouped,
+          addSectionSuffix = !data.sectionGrouped,
           shouldNestMarkdown = !hasNestedChildren && this.shouldNestMarkdownTodos ( data ),
           todoData = shouldNestMarkdown ? this.buildMarkdownTodoTree ( data ) : data,
           todos = todoData.map ( obj => {
 
-            const label = this.config.embedded.view.wholeLine ? obj.line : obj.message || obj.todo,
-                  sectionSuffix = ( addSectionSuffix && obj.sectionTitle && !obj.isNested ) ? ` (${obj.sectionTitle})` : '',
-                  labelWithSection = `${label}${sectionSuffix}`,
-                  item = new Todo ( obj, labelWithSection, this.config.embedded.view.icons );
+            const label = this.getTodoLabel ( obj, addSectionSuffix ),
+                  item = new Todo ( obj, label, this.config.embedded.view.icons );
 
             if ( _.isArray ( obj.children ) && obj.children.length ) {
               item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
@@ -147,35 +147,27 @@ class Embedded extends View {
 
           } );
 
-    if ( this.config.embedded.view.sortBy === 'label' ) {
-
-      todos.sort ( ( a, b ) => {
-
-        return a.label.toString ().localeCompare ( b.label.toString () );
-
-      });
-
-    }
+    if ( this.config.embedded.view.sortBy === 'label' ) this.sortTodosByLabel ( todos );
 
     return todos;
 
   }
 
-  getMarkdownSectionGroups ( data ) {
+  getMarkdownSectionGroups ( data: TodoDataArray ) {
 
-    if ( ( data as any ).sectionGrouped || ( data as any ).fromNested ) return;
+    if ( data.sectionGrouped || data.fromNested ) return;
     if ( !data.length ) return;
     if ( !data.every ( todo => todo && todo.type === 'MARKDOWN TASKS ✓' ) ) return;
     if ( !data.every ( todo => todo.sectionTitle ) ) return;
 
     const sections = [],
-          sectionMap = new Map<string, any[]> ();
+          sectionMap = new Map<string, TodoDataArray> ();
 
     data.forEach ( todo => {
       const title = todo.sectionTitle;
       if ( !title ) return;
       if ( !sectionMap.has ( title ) ) {
-        sectionMap.set ( title, [] );
+        sectionMap.set ( title, this.asTodoDataArray ( [] ) );
         sections.push ( title );
       }
       sectionMap.get ( title ).push ( todo );
@@ -185,10 +177,35 @@ class Embedded extends View {
 
     return sections.map ( title => {
       const sectionTodos = sectionMap.get ( title );
-      ( sectionTodos as any ).sectionGrouped = true;
-      const displayTitle = title.replace ( /^\s*#{1,6}\s+/, '' ).trim ();
+      sectionTodos.sectionGrouped = true;
+      const displayTitle = Markdown.getDisplayHeadingTitle ( title );
       return new Group ( sectionTodos, displayTitle, false );
     } );
+
+  }
+
+  asTodoDataArray ( data: any[] ) {
+
+    return data as TodoDataArray;
+
+  }
+
+  getTodoLabel ( obj, addSectionSuffix: boolean ) {
+
+    const label = this.config.embedded.view.wholeLine ? obj.line : obj.message || obj.todo,
+          sectionSuffix = ( addSectionSuffix && obj.sectionTitle && !obj.isNested ) ? ` (${obj.sectionTitle})` : '';
+
+    return `${label}${sectionSuffix}`;
+
+  }
+
+  sortTodosByLabel ( todos ) {
+
+    todos.sort ( ( a, b ) => {
+
+      return a.label.toString ().localeCompare ( b.label.toString () );
+
+    });
 
   }
 
@@ -208,13 +225,12 @@ class Embedded extends View {
 
   buildMarkdownTodoTree ( data ) {
 
-    const indentUnit = this.getIndentUnit (),
+    const indentUnit = Markdown.getIndentUnit ( this.config.indentation ),
           indentUnitLength = indentUnit.length,
           levels = data.map ( todo => {
             const rawLine = todo.rawLine || '',
-                  leading = rawLine.match ( /^\s*/ )[0],
-                  expanded = leading.replace ( /\t/g, indentUnit );
-            return Math.floor ( expanded.length / indentUnitLength );
+                  indentWidth = Markdown.getIndentWidth ( rawLine, indentUnit );
+            return Math.floor ( indentWidth / indentUnitLength );
           } ),
           minLevel = Math.min ( ...levels ),
           roots = [],
@@ -238,17 +254,12 @@ class Embedded extends View {
 
   }
 
-  getIndentUnit () {
-
-    const indentation = this.config.indentation;
-
-    if ( typeof indentation !== 'string' || !indentation.length ) return '  ';
-
-    return indentation;
-
-  }
-
 }
+
+type TodoDataArray = Array<any> & {
+  sectionGrouped?: boolean;
+  fromNested?: boolean;
+};
 
 /* EXPORT */
 

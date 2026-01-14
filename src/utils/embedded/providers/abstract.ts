@@ -9,6 +9,7 @@ import Config from '../../../config';
 import EmbeddedView from '../../../views/embedded';
 import Folder from '../../folder';
 import File from '../../file';
+import Markdown from '../markdown';
 
 /* ABSTRACT */
 
@@ -240,18 +241,23 @@ class Abstract {
 
   addMarkdownSectionTitles ( filesData ) {
 
-    const filePaths = Object.keys ( filesData );
+    const filePaths = Object.keys ( filesData ),
+          indentUnit = Markdown.getIndentUnit ( Config.get ().indentation );
 
     filePaths.forEach ( filePath => {
 
-      const data = filesData[filePath];
+      const data = filesData[filePath] as TodoDataArray;
 
       if ( !data || !data.length ) return;
+      if ( data.sectionMetaComputed ) return;
       if ( path.extname ( filePath ).toLowerCase () !== '.md' ) return;
 
       const todosToUpdate = data.filter ( datum => datum.type === 'MARKDOWN TASKS ✓' );
 
-      if ( !todosToUpdate.length ) return;
+      if ( !todosToUpdate.length ) {
+        data.sectionMetaComputed = true;
+        return;
+      }
 
       const content = File.readSync ( filePath );
 
@@ -270,18 +276,17 @@ class Abstract {
       let currentSection = '',
           inCodeFence = false;
 
-      const baseIndentBySection = new Map<string, number> (),
-            indentUnit = this.getIndentUnit ( Config.get ().indentation );
+      const baseIndentBySection = new Map<string, number> ();
 
       lines.forEach ( ( line, lineNr ) => {
 
-        if ( /^\s*(```|~~~)/.test ( line ) ) {
+        if ( Markdown.isCodeFence ( line ) ) {
           inCodeFence = !inCodeFence;
         }
 
         if ( !inCodeFence ) {
-          const headingMatch = line.match ( /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/ );
-          if ( headingMatch ) currentSection = `${headingMatch[1]} ${headingMatch[2].trim ()}`;
+          const headingTitle = Markdown.getHeadingTitle ( line );
+          if ( headingTitle ) currentSection = headingTitle;
         }
 
         const todosAtLine = lineToTodos.get ( lineNr );
@@ -295,9 +300,7 @@ class Abstract {
           return;
         }
 
-        const leading = line.match ( /^\s*/ )[0],
-              expanded = leading.replace ( /\t/g, indentUnit ),
-              indentWidth = expanded.length,
+        const indentWidth = Markdown.getIndentWidth ( line, indentUnit ),
               baseIndent = baseIndentBySection.get ( currentSection );
 
         if ( _.isUndefined ( baseIndent ) || indentWidth <= baseIndent ) {
@@ -315,19 +318,17 @@ class Abstract {
 
       } );
 
+      data.sectionMetaComputed = true;
+
     } );
 
   }
 
-  getIndentUnit ( indentation ) {
-
-    if ( typeof indentation !== 'string' || !indentation.length ) return '  ';
-
-    return indentation;
-
-  }
-
 }
+
+type TodoDataArray = Array<any> & {
+  sectionMetaComputed?: boolean;
+};
 
 /* EXPORT */
 
